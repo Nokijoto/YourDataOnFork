@@ -99,5 +99,85 @@ class DatabaseSeeder extends Seeder
                 );
             }
         }
+
+        // Seed default HIBP breaches
+        $breaches = [
+            [
+                'name' => 'Adobe',
+                'breach_date' => 'October 2013',
+                'compromised_data' => 'Email addresses, Passwords, Password hints, Usernames',
+            ],
+            [
+                'name' => 'LinkedIn',
+                'breach_date' => 'May 2016',
+                'compromised_data' => 'Email addresses, Passwords',
+            ],
+            [
+                'name' => 'Canva',
+                'breach_date' => 'May 2019',
+                'compromised_data' => 'Email addresses, Names, Passwords, Usernames',
+            ],
+            [
+                'name' => 'Zynga',
+                'breach_date' => 'September 2019',
+                'compromised_data' => 'Email addresses, Passwords, Phone numbers, Usernames',
+            ],
+            [
+                'name' => 'Dropbox',
+                'breach_date' => 'July 2012',
+                'compromised_data' => 'Email addresses, Passwords',
+            ],
+        ];
+
+        $breachModels = [];
+        foreach ($breaches as $breach) {
+            $breachModels[$breach['name']] = \App\Models\PwnedBreach::firstOrCreate(
+                ['name' => $breach['name']],
+                [
+                    'breach_date' => $breach['breach_date'],
+                    'compromised_data' => $breach['compromised_data'],
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        // Seed default HIBP rules
+        $pwnedRules = [
+            [
+                'email' => 'admin@example.com',
+                'breach' => 'Adobe',
+                'is_pwned' => true,
+            ],
+            [
+                'email' => 'admin@example.com',
+                'breach' => 'Canva',
+                'is_pwned' => true,
+            ],
+            [
+                'email' => 'test@example.com',
+                'breach' => 'LinkedIn',
+                'is_pwned' => true,
+            ],
+            [
+                'email' => 'test@example.com',
+                'breach' => 'Dropbox',
+                'is_pwned' => true,
+            ],
+        ];
+
+        foreach ($pwnedRules as $rule) {
+            $breach = $breachModels[$rule['breach']] ?? null;
+            if ($breach) {
+                \App\Models\PwnedRule::firstOrCreate(
+                    [
+                        'email' => $rule['email'],
+                        'breach_id' => $breach->id,
+                    ],
+                    [
+                        'is_pwned' => $rule['is_pwned'],
+                    ]
+                );
+            }
+        }
     }
 }

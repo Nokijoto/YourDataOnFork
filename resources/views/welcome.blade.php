@@ -330,6 +330,8 @@
         const users = {!! json_encode($users) !!};
         const services = {!! json_encode($services) !!};
         const rules = {!! json_encode($rules) !!};
+        const breaches = {!! json_encode($breaches) !!};
+        const pwnedRules = {!! json_encode($pwnedRules) !!};
         const terminalContent = document.getElementById('terminal-content');
         const terminalInput = document.getElementById('terminal-input');
 
@@ -342,6 +344,7 @@
                     '  <span class="text-cyan-300 font-semibold">status</span>           - Query system & database connectivity telemetry',
                     '  <span class="text-cyan-300 font-semibold">users</span>            - Read encrypted database accounts table',
                     '  <span class="text-cyan-300 font-semibold">sherlock [nick]</span>   - Run OSINT search simulator for a username',
+                    '  <span class="text-cyan-300 font-semibold">pwned [email]</span>     - Check email against leaked HIBP databases',
                     '  <span class="text-cyan-300 font-semibold">ping</span>             - Test latency to docker containers',
                     '  <span class="text-cyan-300 font-semibold">hack</span>             - Run brute force simulator',
                     '  <span class="text-cyan-300 font-semibold">clear</span>            - Clean terminal screen'
@@ -399,6 +402,13 @@
             },
             sherlock: {
                 desc: 'Run username search',
+                run: (arg) => {
+                    // special case handled in listener
+                    return [];
+                }
+            },
+            pwned: {
+                desc: 'Check email against leaks',
                 run: (arg) => {
                     // special case handled in listener
                     return [];
@@ -515,6 +525,85 @@
                         } else {
                             printToTerminal([
                                 `<span class="text-zinc-500">[-] NOT FOUND:</span> ${service.name}`
+                            ]);
+                        }
+                        index++;
+                    }, 250);
+                    return;
+                }
+
+                if (cmdName === 'pwned') {
+                    if (!arg) {
+                        printToTerminal([
+                            '<span class="text-red-400">Error: Email address parameter is missing.</span>',
+                            'Usage: <span class="text-cyan-300">pwned [email]</span>',
+                            'Example: <span class="text-cyan-300">pwned admin@example.com</span>'
+                        ]);
+                        return;
+                    }
+
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(arg)) {
+                        printToTerminal([
+                            '<span class="text-yellow-400">Warning: Entered string does not look like a valid email. Scanning anyway...</span>'
+                        ]);
+                    }
+
+                    if (breaches.length === 0) {
+                        printToTerminal([
+                            '[*] No active breach databases configured in database.',
+                            '[*] Please log in to Filament Admin Panel to activate breach databases.'
+                        ]);
+                        return;
+                    }
+
+                    terminalInput.disabled = true;
+                    printToTerminal([
+                        `[*] Querying leak repositories for target: <span class="text-cyan-300 font-bold">${arg}</span>`,
+                        `[*] Querying ${breaches.length} compromised datasets...`,
+                        '---------------------------------------------'
+                    ]);
+
+                    let index = 0;
+                    let pwnedCount = 0;
+                    const intervalId = setInterval(() => {
+                        if (index >= breaches.length) {
+                            clearInterval(intervalId);
+                            printToTerminal(['---------------------------------------------']);
+                            if (pwnedCount > 0) {
+                                printToTerminal([
+                                    `<span class="text-red-500 font-bold glow-green">!!! WARNING !!! THIS EMAIL IS PWNED IN ${pwnedCount} BREACHES!</span>`,
+                                    '<span class="text-red-400">Recommendation: Change passwords for these accounts immediately.</span>',
+                                    '---------------------------------------------'
+                                ]);
+                            } else {
+                                printToTerminal([
+                                    `<span class="text-green-400 font-bold">[+] SCAN COMPLETE: No compromises found in scanned databases.</span>`,
+                                    '---------------------------------------------'
+                                ]);
+                            }
+                            terminalInput.disabled = false;
+                            terminalInput.focus();
+                            return;
+                        }
+
+                        const breach = breaches[index];
+                        const rule = pwnedRules.find(r => r.email.toLowerCase() === arg.toLowerCase() && r.breach_id === breach.id);
+                        
+                        let isPwned = false;
+                        if (rule) {
+                            isPwned = rule.is_pwned;
+                        }
+
+                        if (isPwned) {
+                            pwnedCount++;
+                            printToTerminal([
+                                `<span class="text-red-500 font-bold animate-pulse">[!] PWNED:</span> <span class="text-red-300 font-bold">${breach.name}</span> (${breach.breach_date || 'Unknown Date'})`,
+                                `    <span class="text-zinc-500">Leaked data:</span> <span class="text-yellow-500/80">${breach.compromised_data || 'Credentials'}</span>`
+                            ]);
+                        } else {
+                            printToTerminal([
+                                `<span class="text-green-400">[+] CLEAN:</span> ${breach.name}`
                             ]);
                         }
                         index++;
