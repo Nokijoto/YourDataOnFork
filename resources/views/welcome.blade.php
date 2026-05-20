@@ -15,9 +15,31 @@
     <style>
         body {
             font-family: 'Share Tech Mono', monospace;
-            background-color: #050806;
+            background:
+                linear-gradient(rgba(16, 185, 129, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 211, 238, 0.025) 1px, transparent 1px),
+                #030706;
+            background-size: 44px 44px, 44px 44px, auto;
             color: #4af626;
             overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                linear-gradient(90deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.24) 48%, rgba(0, 0, 0, 0.68)),
+                linear-gradient(180deg, rgba(3, 7, 6, 0.1), rgba(3, 7, 6, 0.72));
+        }
+
+        body > header,
+        body > main,
+        body > footer {
+            position: relative;
+            z-index: 3;
         }
         
         .glow-green {
@@ -40,20 +62,23 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            z-index: -1;
-            opacity: 0.08;
+            z-index: 1;
+            opacity: 0.16;
             pointer-events: none;
         }
         .scanline {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
             background: linear-gradient(
                 to bottom,
                 rgba(255,255,255,0),
                 rgba(255,255,255,0) 50%,
-                rgba(0, 0, 0, 0.3) 50%,
-                rgba(0, 0, 0, 0.3)
+                rgba(0, 0, 0, 0.22) 50%,
+                rgba(0, 0, 0, 0.22)
             );
             background-size: 100% 4px;
-            z-index: 10;
+            z-index: 2;
         }
         .terminal-scroll::-webkit-scrollbar {
             width: 6px;
@@ -67,10 +92,11 @@
         }
     </style>
 </head>
-<body class="relative min-h-screen flex flex-col justify-between p-4 md:p-8 scanline">
+<body class="relative min-h-screen flex flex-col justify-between p-4 md:p-8">
     
     <!-- Matrix rain canvas -->
     <canvas id="matrix" class="matrix-bg"></canvas>
+    <div class="scanline"></div>
     
     <!-- Header -->
     <header class="w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 mb-6 border border-emerald-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-green">
@@ -144,6 +170,25 @@
                 </div>
             </div>
             
+            <!-- Live Capture Counter -->
+            <div class="p-4 border border-red-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-semibold tracking-wider text-red-400 uppercase">// LIVE CAPTURE</h2>
+                    <span id="monitor-badge" class="text-xs px-2 py-0.5 rounded border border-gray-700 text-gray-500">OFF</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-black/40 rounded p-2 text-center">
+                        <div class="text-xl font-bold text-red-400" id="stat-captures">0</div>
+                        <div class="text-xs text-gray-500 uppercase">Requests</div>
+                    </div>
+                    <div class="bg-black/40 rounded p-2 text-center">
+                        <div class="text-xl font-bold text-cyan-400" id="stat-packets">0</div>
+                        <div class="text-xs text-gray-500 uppercase">Packets</div>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-600">Wpisz <span class="text-red-400 font-bold">monitor</span> aby włączyć live feed</div>
+            </div>
+
             <!-- Network / Services Status -->
             <div class="p-6 border border-emerald-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-green flex-grow flex flex-col justify-between">
                 <div>
@@ -220,6 +265,7 @@
                         <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
                         <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
                         <span class="text-xs text-green-500/60 uppercase tracking-widest ml-2">INTERACTIVE SHELL v1.0.8</span>
+                        <span id="monitor-status" class="hidden text-xs px-2 py-0.5 rounded bg-red-900/40 border border-red-500/40 text-red-400 animate-pulse ml-3">● MONITORING</span>
                     </div>
                     <span class="text-xs text-green-500/40">ttyS001</span>
                 </div>
@@ -231,6 +277,11 @@
                     <div class="border-b border-emerald-950/40 pb-2">Ready for inputs...</div>
                 </div>
                 
+                <!-- Live Alert Banner -->
+                <div id="live-alert" class="hidden mb-2 p-2 rounded border border-red-500/60 bg-red-950/30 text-red-400 text-xs font-mono animate-pulse">
+                    <span id="live-alert-text"></span>
+                </div>
+
                 <!-- Terminal Input -->
                 <div class="flex items-center gap-2 pt-2 border-t border-emerald-950">
                     <span class="text-green-500 font-bold shrink-0">guest@forkeddata:~$</span>
@@ -345,6 +396,9 @@
                     '  <span class="text-cyan-300 font-semibold">users</span>            - Read encrypted database accounts table',
                     '  <span class="text-cyan-300 font-semibold">sherlock [nick]</span>   - Run OSINT search simulator for a username',
                     '  <span class="text-cyan-300 font-semibold">pwned [email]</span>     - Check email against leaked HIBP databases',
+                    '  <span class="text-red-400 font-semibold">monitor</span>          - Toggle live capture feed (auto-alerts)',
+                    '  <span class="text-red-400 font-semibold">captures</span>         - Show last 5 captured form submissions',
+                    '  <span class="text-cyan-400 font-semibold">packets</span>          - Show last 10 network packets',
                     '  <span class="text-cyan-300 font-semibold">ping</span>             - Test latency to docker containers',
                     '  <span class="text-cyan-300 font-semibold">hack</span>             - Run brute force simulator',
                     '  <span class="text-cyan-300 font-semibold">clear</span>            - Clean terminal screen'
@@ -413,6 +467,18 @@
                     // special case handled in listener
                     return [];
                 }
+            },
+            monitor: {
+                desc: 'Toggle live capture monitoring',
+                run: () => { return []; }  // special case
+            },
+            captures: {
+                desc: 'Show last captured form submissions',
+                run: () => { return []; }  // special case
+            },
+            packets: {
+                desc: 'Show last captured network packets',
+                run: () => { return []; }  // special case
             }
         };
 
@@ -424,6 +490,92 @@
             });
             // Auto scroll
             terminalContent.scrollTop = terminalContent.scrollHeight;
+        }
+
+        // ============================================================
+        // LIVE CAPTURE MONITOR — polling /api/latest every 4 seconds
+        // ============================================================
+        let monitorActive = false;
+        let monitorInterval = null;
+        let lastCaptureId = 0;
+        let lastPacketId = 0;
+        const statCaptures = document.getElementById('stat-captures');
+        const statPackets  = document.getElementById('stat-packets');
+        const monitorBadge  = document.getElementById('monitor-badge');
+        const monitorStatus = document.getElementById('monitor-status');
+        const liveAlert     = document.getElementById('live-alert');
+        const liveAlertText = document.getElementById('live-alert-text');
+
+        function showLiveAlert(msg) {
+            liveAlertText.innerHTML = msg;
+            liveAlert.classList.remove('hidden');
+            setTimeout(() => liveAlert.classList.add('hidden'), 6000);
+        }
+
+        function formatSourceBadge(source) {
+            const colors = {
+                discord: 'text-indigo-400', facebook: 'text-blue-400',
+                steam: 'text-cyan-400', uczelnia: 'text-amber-400'
+            };
+            const c = colors[source] || 'text-gray-400';
+            return `<span class="${c} font-bold uppercase">[${source}]</span>`;
+        }
+
+        function pollLiveFeed() {
+            fetch('/api/latest')
+                .then(r => r.json())
+                .then(data => {
+                    // Update counters
+                    statCaptures.textContent = data.captures.length;
+                    statPackets.textContent  = data.packets.length;
+
+                    // Alert on new captures
+                    data.captures.forEach(c => {
+                        if (c.id > lastCaptureId) {
+                            lastCaptureId = c.id;
+                            const payloadKeys = c.payload ? Object.keys(c.payload).slice(0, 3).join(', ') : '—';
+                            showLiveAlert(`🔴 NOWE PRZECHWYCENIE! ${formatSourceBadge(c.source)} IP: <span class="text-green-300">${c.ip_address}</span> | Pola: ${payloadKeys}`);
+                            if (monitorActive) {
+                                printToTerminal([`<span class="text-red-500 font-bold">⚡ CAPTURE</span> ${formatSourceBadge(c.source)} ${c.ip_address} @ ${c.created_at}`,
+                                    `   Payload: <span class="text-red-300">${payloadKeys}</span>`]);
+                            }
+                        }
+                    });
+
+                    // Alert on new interesting packets
+                    data.packets.forEach(p => {
+                        if (p.id > lastPacketId) {
+                            lastPacketId = p.id;
+                            if (monitorActive && ['HTTP','HTTPS','DNS','ARP'].includes(p.protocol)) {
+                                printToTerminal([`<span class="text-cyan-400 font-bold">📡 PKT</span> <span class="text-yellow-400">${p.protocol}</span> ${p.src_ip}:${p.src_port||'?'} → ${p.dst_ip}:${p.dst_port||'?'} | ${p.summary || p.packet_size + ' B'}`]);
+                            }
+                        }
+                    });
+                })
+                .catch(() => {});
+        }
+
+        function startMonitor() {
+            monitorActive = true;
+            monitorBadge.textContent = 'ON';
+            monitorBadge.className = 'text-xs px-2 py-0.5 rounded border border-red-500/60 text-red-400 animate-pulse';
+            monitorStatus.classList.remove('hidden');
+            monitorInterval = setInterval(pollLiveFeed, 4000);
+            pollLiveFeed(); // immediate first poll
+            printToTerminal([
+                '<span class="text-red-400 font-bold">[ MONITOR ACTIVE ]</span> Live feed uruchomiony.',
+                'Przechwycone dane i pakiety będą wyświetlane automatycznie.',
+                'Wpisz <span class="text-red-300">monitor</span> ponownie aby wyłączyć.'
+            ]);
+        }
+
+        function stopMonitor() {
+            monitorActive = false;
+            monitorBadge.textContent = 'OFF';
+            monitorBadge.className = 'text-xs px-2 py-0.5 rounded border border-gray-700 text-gray-500';
+            monitorStatus.classList.add('hidden');
+            clearInterval(monitorInterval);
+            printToTerminal(['<span class="text-gray-500">[ MONITOR OFF ]</span> Live feed zatrzymany.']);
         }
 
         terminalInput.addEventListener('keydown', (e) => {
@@ -611,6 +763,78 @@
                     return;
                 }
 
+                if (cmdName === 'monitor') {
+                    if (monitorActive) {
+                        stopMonitor();
+                    } else {
+                        startMonitor();
+                    }
+                    return;
+                }
+
+                if (cmdName === 'captures') {
+                    terminalInput.disabled = true;
+                    printToTerminal(['[*] Pobieranie ostatnich przechwyconych requestów...']);
+                    fetch('/api/latest')
+                        .then(r => r.json())
+                        .then(data => {
+                            const lines = ['---------------------------------------------'];
+                            if (data.captures.length === 0) {
+                                lines.push('<span class="text-gray-500">Brak przechwyconych requestów.</span>');
+                            } else {
+                                data.captures.slice(0, 5).forEach((c, i) => {
+                                    const payloadKeys = c.payload ? Object.keys(c.payload).slice(0, 4).join(', ') : '—';
+                                    lines.push(`<span class="text-red-400 font-bold">[${i+1}]</span> ${formatSourceBadge(c.source)} <span class="text-green-300">${c.ip_address}</span> @ ${c.created_at}`);
+                                    lines.push(`    Pola: <span class="text-yellow-400">${payloadKeys}</span>`);
+                                });
+                            }
+                            lines.push('---------------------------------------------');
+                            lines.push(`Total: <span class="text-red-400 font-bold">${data.captures.length}</span> przechwyconych requestów`);
+                            printToTerminal(lines);
+                            terminalInput.disabled = false;
+                            terminalInput.focus();
+                        })
+                        .catch(() => {
+                            printToTerminal(['<span class="text-red-400">Błąd połączenia z API.</span>']);
+                            terminalInput.disabled = false;
+                        });
+                    return;
+                }
+
+                if (cmdName === 'packets') {
+                    terminalInput.disabled = true;
+                    printToTerminal(['[*] Pobieranie ostatnich pakietów sieciowych...']);
+                    fetch('/api/latest')
+                        .then(r => r.json())
+                        .then(data => {
+                            const protoColor = {
+                                HTTP: 'text-orange-400', HTTPS: 'text-green-400',
+                                DNS: 'text-lime-400', TCP: 'text-cyan-400',
+                                UDP: 'text-yellow-400', ICMP: 'text-pink-400',
+                                ARP: 'text-purple-400'
+                            };
+                            const lines = ['---------------------------------------------'];
+                            if (data.packets.length === 0) {
+                                lines.push('<span class="text-gray-500">Brak przechwyconych pakietów.</span>');
+                            } else {
+                                data.packets.slice(0, 10).forEach((p, i) => {
+                                    const c = protoColor[p.protocol] || 'text-gray-400';
+                                    lines.push(`<span class="${c} font-bold">[${p.protocol}]</span> ${p.src_ip||'?'}:${p.src_port||'?'} → ${p.dst_ip||'?'}:${p.dst_port||'?'} | <span class="text-gray-400">${p.summary || p.packet_size + ' B'}</span>`);
+                                });
+                            }
+                            lines.push('---------------------------------------------');
+                            lines.push(`Total: <span class="text-cyan-400 font-bold">${data.packets.length}</span> pakietów (ostatnie 10)`);
+                            printToTerminal(lines);
+                            terminalInput.disabled = false;
+                            terminalInput.focus();
+                        })
+                        .catch(() => {
+                            printToTerminal(['<span class="text-red-400">Błąd połączenia z API.</span>']);
+                            terminalInput.disabled = false;
+                        });
+                    return;
+                }
+
                 if (commands[cmdName]) {
                     const result = commands[cmdName].run(arg);
                     printToTerminal(result);
@@ -629,6 +853,10 @@
                 terminalInput.focus();
             }
         });
+
+        // Background passive polling (stats only, no terminal output until monitor is ON)
+        setInterval(pollLiveFeed, 10000);
+        pollLiveFeed();
     </script>
 </body>
 </html>
