@@ -1,58 +1,278 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🔴 FORKED_DATA — System Demonstracji Cyberzagrożeń
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> ⚠️ **ZASTRZEŻENIE PRAWNE / DISCLAIMER**: Projekt powstał wyłącznie w celach **edukacyjnych i demonstracyjnych** w ramach zajęć kół naukowych. Wszelkie techniki i scenariusze opisane w tym repozytorium są prezentowane w kontrolowanym środowisku, za zgodą uczestników. Nielegalne użycie opisanych metod jest przestępstwem ściganych przez prawo.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Opis projektu
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**FORKED_DATA** to edukacyjna platforma demonstracyjna pokazująca, w jaki sposób cyberprzestępcy zbierają dane użytkowników — i jak się przed tym chronić.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Projekt symuluje środowisko zbierania danych na żywo: dane wpisywane przez użytkowników (w tym loginy, hasła, dane osobowe) oraz aktywność sieciowa są przechwytywane, analizowane i wyświetlane w czasie rzeczywistym w dashboardzie operatora. Całość służy jako materiał dydaktyczny do prezentacji zagrożeń bezpieczeństwa w sieci.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🎯 Cel demonstracji
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Projekt ma na celu pokazanie:
+- Jak łatwo jest stworzyć fałszywą stronę wyłudzającą dane
+- Ile informacji można zebrać o użytkowniku bez jego wiedzy
+- W jaki sposób **ponowne używanie nicków i haseł** dramatycznie zwiększa zasięg ataku
+- Jak wycieki danych z przeszłości (HIBP) są aktywnie wykorzystywane przez hakerów
+- Jak się chronić — polityka haseł, 2FA, menadżery haseł
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
+## 🏗️ Podział ról (3 koła naukowe)
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 🛡️ AEGIS — Zbieranie Informacji
+**Odpowiedzialny: Dominik**
 
-```bash
-composer require laravel/boost --dev
+Tworzenie metod i narzędzi wyciągania informacji od użytkowników:
+- Klon strony logowania **Discord**
+- Klon strony logowania **Facebook**
+- Klon strony logowania **Steam**
+- Strona **wizytówkowa** z QR kodami, linkami afiliacyjnymi i call-to-action
+- Strona udająca **stronę uczelni** (formularz rejestracyjny)
 
-php artisan boost:install
+Każda z emulacji jest zaprojektowana tak, aby wymusić jak najwięcej interakcji i zebrać maksimum danych: loginy, hasła, dane osobowe, adresy e-mail, numery telefonów.
+
+---
+
+### 🖧 NODE — Gromadzenie i Zarządzanie Danymi
+**Odpowiedzialny: Eryk**
+
+Infrastruktura fizyczna i sieciowa:
+- Konfiguracja routera z **OpenWRT**
+- Przygotowanie środowiska przechwytywania ruchu (laptop + dedykowany AP)
+- Ustawienie **Reverse Proxy** do przekierowania ruchu
+- Środowisko izolowane — własna sieć WiFi jako pułapka
+
+---
+
+### 📡 CONECT — Analiza i Wyświetlanie Danych
+**Odpowiedzialny: Rafał (ten projekt)**
+
+Dashboard na żywo oraz analiza danych:
+- **Panel operatora** (ten projekt — Laravel + Filament)
+- Wyświetlanie ruchu sieciowego i zebranych danych w czasie rzeczywistym
+- Uruchamianie narzędzi OSINT na przechwyconych danych:
+  - **Sherlock** — znajdowanie kont powiązanych z nickiem
+  - **Have I Been Pwned** — sprawdzanie wycieków e-maili i haseł
+- Demonstracja korelacji danych między różnymi platformami
+
+---
+
+## 🔍 Moduł CONECT — Szczegółowy Opis (ten projekt)
+
+### Interaktywny Dashboard Operatora
+
+Serwer Laravel z panelem **Filament Admin** służącym jako centrum dowodzenia:
+- **Konsola terminala na żywo** — hacker-style interfejs do uruchamiania narzędzi
+- **Wyświetlanie zebranych danych** w czasie rzeczywistym
+- **Konfiguracja serwisów** do wyszukiwania
+
+### Komenda `sherlock [nick]`
+
+Symuluje działanie narzędzia [Sherlock](https://github.com/sherlock-project/sherlock) — skanuje popularne platformy w poszukiwaniu kont powiązanych z daną nazwą użytkownika.
+
+**Dlaczego to ważne?**
+> Jeśli ofiara używa tego samego nicku na wielu platformach (np. `j.kowalski` na Discord, Twitterze, GitHubie i Reddicie), przejęcie jednego konta pozwala hakerowi natychmiast zlokalizować pozostałe. Wystarczy jeden kompromitowany serwis, aby stracić prywatność na wszystkich.
+
+```
+guest@forkeddata:~$ sherlock j.kowalski
+[*] Indexing target username: j.kowalski
+[*] Scanning 6 active databases...
+[+] FOUND: GitHub        => https://github.com/j.kowalski
+[+] FOUND: Twitter / X   => https://x.com/j.kowalski
+[-] NOT FOUND: Reddit
+[+] FOUND: LinkedIn      => https://linkedin.com/in/j.kowalski
+...
+[*] Accounts located: 3 / 6
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Komenda `pwned [email]`
 
-## Contributing
+Symuluje działanie [Have I Been Pwned](https://haveibeenpwned.com/) — sprawdza, czy adres e-mail pojawił się w znanych bazach wyciekłych danych.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**Dlaczego to ważne?**
 
-## Code of Conduct
+> Kiedy ofiara wpisuje e-mail i hasło na fałszywej stronie, operator natychmiast może sprawdzić:
+> 1. Czy ten e-mail pojawił się w jakimkolwiek wycieku danych (Adobe 2013, LinkedIn 2016, itd.)
+> 2. Jeśli tak — **jakie typy danych wyciekły** (hasła, adresy, dane karty)
+> 3. Zestawić z właśnie przechwyconymi danymi
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```
+guest@forkeddata:~$ pwned jan.kowalski@gmail.com
+[*] Querying 5 compromised datasets...
+[!] PWNED: Adobe (October 2013)
+    Leaked data: Email addresses, Passwords, Password hints
+[!] PWNED: LinkedIn (May 2016)
+    Leaked data: Email addresses, Passwords
+[+] CLEAN: Canva
+...
+!!! WARNING !!! THIS EMAIL IS PWNED IN 2 BREACHES!
+```
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🔗 Łańcuch Ataku — Jak Dane Się Łączą
 
-## License
+```
+FAZA 1: Zbieranie               FAZA 2: Korelacja                FAZA 3: Eskalacja
+─────────────────                ─────────────────────             ─────────────────
+Użytkownik loguje się  ──────►  sherlock [nick]        ──────►   Inne konta
+na klonie Discord               → 4 platformy znalezione          na wszystkich
+                                                                    platformach
+      │
+      │  e-mail + hasło          pwned [email]          ──────►   "To samo hasło
+      └──────────────  ──────►  → 2 wycieki z 2016r              było w wycieku Adobe!
+                                                                    Prawdopodobnie
+                                                                    używa go wszędzie."
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**Scenariusz demonstracyjny:**
+1. Uczestnik konferencji łączy się z "darmowym WiFi konferencyjnym" (router Eryka)
+2. Wchodzi na klonową stronę Discord (Dominika) i wpisuje login + hasło
+3. Na ekranie operatora (Rafał) pojawia się alert z danymi
+4. Operator uruchamia `sherlock [nick]` → находит 3 inne konta na różnych platformach
+5. Operator uruchamia `pwned [email]` → e-mail wyciekł w 2016 z LinkedIn
+6. **Wniosek**: Ofiara prawdopodobnie używa tego samego hasła od 2016 roku na wszystkich serwisach
+
+---
+
+## 🧠 Dlaczego Ponowne Używanie Haseł Jest Niebezpieczne
+
+| Scenariusz | Ryzyko |
+|------------|--------|
+| Ten sam nick na 10 serwisach | Jedno konto → mapa wszystkich profili |
+| To samo hasło wszędzie | Jeden wyciek → dostęp do wszystkiego |
+| E-mail znany z wycieku | Targeted phishing, credential stuffing |
+| Nick = fragment imienia/nazwiska | Deanonimizacja, OSINT, doxing |
+| Stare hasło z 2016 | Automatyczne ataki słownikowe działają natychmiast |
+
+---
+
+## 🛡️ Jak Się Chronić — Rekomendacje
+
+### 🔑 Polityka Haseł
+- **Unikalne hasło do każdego serwisu** — menadżer haseł (Bitwarden, 1Password, KeePass)
+- **Minimum 16 znaków**, generowane losowo
+- Nigdy nie używaj słów ze słownika, dat urodzin, imion
+- Regularnie sprawdzaj wycieki: [haveibeenpwned.com](https://haveibeenpwned.com)
+
+### 🔐 Uwierzytelnianie
+- **2FA/MFA wszędzie gdzie możliwe** — klucz fizyczny (YubiKey), TOTP (Authy, Google Authenticator)
+- Preferuj klucze sprzętowe nad SMS-em (SIM swapping!)
+- Nawet jeśli hasło wycieknie — bez 2FA atakujący nie wejdzie
+
+### 🌐 Bezpieczeństwo Sieciowe
+- **Nigdy nie ufaj publicznym sieciom WiFi** — używaj VPN
+- Sprawdzaj certyfikaty SSL (kłódka w przeglądarce)
+- Uważaj na URL — `disc0rd.com` ≠ `discord.com`
+- Używaj DNS-over-HTTPS (Cloudflare 1.1.1.1, NextDNS)
+
+### 👤 Higiena Tożsamości Cyfrowej
+- Różne nicki na różnych platformach
+- Dedykowany e-mail alias do każdego serwisu (SimpleLogin, AnonAddy)
+- Ogranicz dane osobowe na profilach publicznych
+- Regularnie przeglądaj uprawnienia aplikacji
+
+---
+
+## 🛠️ Stack Technologiczny (NODE / CONECT)
+
+| Warstwa | Technologia |
+|---------|-------------|
+| Backend | Laravel 11 (PHP 8.3) |
+| Admin Panel | Filament v3 |
+| Baza danych | MySQL 8.4 (Docker) |
+| Cache | Redis Alpine (Docker) |
+| Frontend | Blade + TailwindCSS + Vite |
+| Mail | Mailpit (lokalne przechwytywanie) |
+| Środowisko | Docker / Laravel Sail |
+
+---
+
+## 🚀 Uruchomienie
+
+```bash
+# Sklonuj repozytorium
+git clone <repo-url>
+cd forkeddata
+
+# Skopiuj konfigurację
+cp .env.example .env
+
+# Uruchom kontenery Docker
+./vendor/bin/sail up -d
+
+# Zainstaluj zależności
+./vendor/bin/sail composer install
+./vendor/bin/sail npm install
+
+# Uruchom migracje i seeder
+./vendor/bin/sail artisan migrate --seed
+
+# Zbuduj assety
+./vendor/bin/sail npm run build
+```
+
+### Dostęp
+
+| URL | Opis | Login |
+|-----|------|-------|
+| `http://localhost` | Dashboard operatora (terminal) | — |
+| `http://localhost/admin` | Panel Filament | `admin@example.com` / `password` |
+| `http://localhost:8025` | Mailpit (e-mail interceptor) | — |
+
+---
+
+## 📊 Panel Administracyjny — Filament
+
+Panel `/admin` zawiera:
+
+### Sherlock — Symulator OSINT
+- **Serwisy Sherlock** — Zarządzanie listą serwisów do przeszukiwania (GitHub, X, Reddit, Instagram, TikTok, LinkedIn) z wzorcami URL
+- **Reguły Sherlock** — Definiowanie wyników wyszukiwania dla konkretnych nicków (FOUND / NOT FOUND)
+
+### Have I Been Pwned — Symulator Wycieków
+- **Bazy Wycieków HIBP** — Lista znanych baz danych wycieków (Adobe, LinkedIn, Canva, Zynga, Dropbox) z datą i opisem skompromitowanych danych
+- **Reguły Wycieków HIBP** — Przypisywanie adresów e-mail do konkretnych wycieków (PWNED / CLEAN)
+
+---
+
+## 📁 Struktura Projektu
+
+```
+app/
+├── Filament/Admin/Resources/
+│   ├── SherlockServices/     # OSINT — serwisy do przeszukiwania
+│   ├── SherlockRules/        # OSINT — reguły nick → serwis
+│   ├── PwnedBreaches/        # HIBP — bazy wycieków
+│   └── PwnedRules/           # HIBP — reguły email → wyciek
+├── Models/
+│   ├── SherlockService.php
+│   ├── SherlockRule.php
+│   ├── PwnedBreach.php
+│   └── PwnedRule.php
+database/
+├── migrations/               # Schematy tabel
+└── seeders/                  # Przykładowe dane
+resources/views/
+└── welcome.blade.php         # Dashboard operatora (terminal)
+```
+
+---
+
+## 📚 Materiały i Linki
+
+- [Sherlock Project](https://github.com/sherlock-project/sherlock) — Narzędzie OSINT do wyszukiwania kont
+- [Have I Been Pwned](https://haveibeenpwned.com) — Baza danych wycieków
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/) — Najczęstsze podatności aplikacji webowych
+- [Bitwarden](https://bitwarden.com) — Open-source menadżer haseł
+- [HIBP API](https://haveibeenpwned.com/API/v3) — Oficjalne API do sprawdzania wycieków
+
+---
+
+*Projekt edukacyjny — koła naukowe | AEGIS · NODE · CONECT*
