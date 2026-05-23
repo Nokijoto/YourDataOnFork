@@ -32,6 +32,7 @@ class CapturedRequestsTable
                         'facebook' => 'info',
                         'steam'    => 'success',
                         'uczelnia' => 'warning',
+                        'fingerprint' => 'purple',
                         default    => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => strtoupper($state))
@@ -73,6 +74,7 @@ class CapturedRequestsTable
                         'facebook' => 'Facebook',
                         'steam'    => 'Steam',
                         'uczelnia' => 'Uczelnia',
+                        'fingerprint' => 'Fingerprint',
                         'unknown'  => 'Nieznane',
                     ]),
             ])

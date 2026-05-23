@@ -11,6 +11,8 @@ class CapturedRequest extends Model
 
     protected $fillable = [
         'source',
+        'external_type',
+        'external_id',
         'ip_address',
         'user_agent',
         'referer',

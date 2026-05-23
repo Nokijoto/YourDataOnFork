@@ -89,6 +89,81 @@ class WebhookController extends Controller
     }
 
     /**
+     * POST /api/webhook/fingerprint
+     * Odbiera pełny fingerprint urządzenia/przeglądarki z agenta demo.
+     */
+    public function fingerprint(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $body = $request->all();
+        $headers = collect($request->headers->all())
+            ->except(['authorization', 'cookie'])
+            ->toArray();
+
+        $fingerprintId = $request->input('id');
+        $ua = $request->input('ua') ?? $request->userAgent();
+        $browserName = data_get($body, 'browser.name', 'unknown browser');
+        $browserVersion = data_get($body, 'browser.version');
+        $osName = data_get($body, 'os.name', 'unknown os');
+        $osVersion = data_get($body, 'os.version');
+        $deviceType = data_get($body, 'device.type', 'unknown device');
+
+        $payload = [
+            '_event' => 'fingerprint',
+            '_fingerprint_id' => $fingerprintId,
+            'summary' => [
+                'device' => $deviceType,
+                'os' => trim("{$osName} {$osVersion}"),
+                'browser' => trim("{$browserName} {$browserVersion}"),
+                'screen' => $request->input('screen'),
+                'timezone' => $request->input('timezone'),
+                'language' => $request->input('language'),
+                'network' => $request->input('network'),
+                'battery' => $request->input('battery'),
+            ],
+            'fingerprint' => $body,
+        ];
+
+        $recordData = [
+            'source' => strtolower($request->header('X-Source') ?? $request->input('source', 'fingerprint')),
+            'external_type' => 'fingerprint',
+            'external_id' => $fingerprintId,
+            'ip_address' => $request->ip(),
+            'user_agent' => $ua,
+            'referer' => $request->header('Referer') ?? $request->input('referrer'),
+            'headers' => $headers,
+            'cookie_metadata' => $this->cookieMetadataFromBody($body)
+                ?? $this->cookieMetadataFromRequest($request),
+            'payload' => $payload,
+            'request_body' => $this->redactSensitiveData($body),
+            'geo' => $request->input('geo'),
+            'request_method' => $request->method(),
+            'request_url' => $request->input('url') ?? $request->headers->get('origin'),
+        ];
+
+        $record = filled($fingerprintId)
+            ? CapturedRequest::updateOrCreate(
+                ['external_type' => 'fingerprint', 'external_id' => $fingerprintId],
+                $recordData,
+            )
+            : CapturedRequest::create($recordData);
+
+        $this->pushLiveEvent('capture', [
+            'id' => $record->id,
+            'source' => $record->source,
+            'ip' => $record->ip_address,
+            'ua' => mb_strimwidth($record->user_agent ?? '', 0, 60, '…'),
+            'payload' => "fingerprint: {$deviceType} | {$browserName} | {$osName}",
+            'created_at' => $record->created_at->format('H:i:s'),
+        ]);
+
+        return response()->json([
+            'status' => $record->wasRecentlyCreated ? 'fingerprint_captured' : 'fingerprint_updated',
+            'id' => $record->id,
+            'fingerprint_id' => $fingerprintId,
+        ])->withHeaders($this->corsHeaders());
+    }
+
+    /**
      * POST /api/webhook/packet
      * Odbiera dane z network sniffera (scapy/tshark na routerze Eryka).
      */
