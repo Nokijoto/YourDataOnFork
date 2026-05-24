@@ -14,6 +14,10 @@ class PwnedRule extends Model
         'email',
         'breach_id',
         'is_pwned',
+        'custom_password',
+        'custom_username',
+        'custom_phone',
+        'custom_name',
     ];
 
     protected $casts = [

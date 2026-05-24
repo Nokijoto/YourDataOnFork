@@ -27,6 +27,18 @@ class PwnedRuleForm
                 Toggle::make('is_pwned')
                     ->label('Czy wyciekł? (PWNED)')
                     ->default(true),
+                TextInput::make('custom_password')
+                    ->label('Niestandardowe hasło (opcjonalne)')
+                    ->placeholder('np. haslo123'),
+                TextInput::make('custom_username')
+                    ->label('Niestandardowy login (opcjonalne)')
+                    ->placeholder('np. janek123'),
+                TextInput::make('custom_phone')
+                    ->label('Niestandardowy telefon (opcjonalne)')
+                    ->placeholder('np. 501234567'),
+                TextInput::make('custom_name')
+                    ->label('Niestandardowe imię/nazwisko (opcjonalne)')
+                    ->placeholder('np. Jan Kowalski'),
             ]);
     }
 }

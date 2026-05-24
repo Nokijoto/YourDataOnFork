@@ -99,7 +99,7 @@
     <div class="scanline"></div>
     
     <!-- Header -->
-    <header class="w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 mb-6 border border-emerald-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-green">
+    <header style="display: none;" class="w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 mb-6 border border-emerald-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-green">
         <div>
             <div class="flex items-center gap-3">
                 <span class="relative flex h-3.5 w-3.5">
@@ -132,7 +132,7 @@
         <div class="lg:col-span-1 flex flex-col gap-6">
             
             <!-- Quick Actions Panel -->
-            <div class="p-6 border border-cyan-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-cyan flex flex-col justify-between h-[300px]">
+            <div style="display: none;" class="p-6 border border-cyan-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-cyan flex flex-col justify-between h-[300px]">
                 <div>
                     <h2 class="text-lg font-semibold tracking-wider text-cyan-400 glow-cyan mb-2 uppercase">
                         // SECURE ACCESS PORTALS
@@ -190,7 +190,7 @@
             </div>
 
             <!-- Network / Services Status -->
-            <div class="p-6 border border-emerald-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-green flex-grow flex flex-col justify-between">
+            <div style="display: none;" class="p-6 border border-emerald-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-green flex-grow flex flex-col justify-between">
                 <div>
                     <h2 class="text-lg font-semibold tracking-wider text-green-400 glow-green mb-4 uppercase">
                         // ACTIVE TELEMETRY
@@ -674,10 +674,6 @@
                             printToTerminal([
                                 `<span class="text-green-400 font-bold">[+] FOUND:</span> ${service.name.padEnd(15)} => <a href="${url}" target="_blank" class="text-cyan-400 underline hover:text-cyan-200">${url}</a>`
                             ]);
-                        } else {
-                            printToTerminal([
-                                `<span class="text-zinc-500">[-] NOT FOUND:</span> ${service.name}`
-                            ]);
                         }
                         index++;
                     }, 250);
@@ -716,50 +712,157 @@
                         '---------------------------------------------'
                     ]);
 
-                    let index = 0;
-                    let pwnedCount = 0;
-                    const intervalId = setInterval(() => {
-                        if (index >= breaches.length) {
-                            clearInterval(intervalId);
-                            printToTerminal(['---------------------------------------------']);
-                            if (pwnedCount > 0) {
-                                printToTerminal([
-                                    `<span class="text-red-500 font-bold glow-green">!!! WARNING !!! THIS EMAIL IS PWNED IN ${pwnedCount} BREACHES!</span>`,
-                                    '<span class="text-red-400">Recommendation: Change passwords for these accounts immediately.</span>',
-                                    '---------------------------------------------'
-                                ]);
+                    const getCompromisedFieldsHtml = (compromisedDataStr, matchedCapture, searchedEmail, rule) => {
+                        if (!compromisedDataStr) return [];
+                        
+                        const items = compromisedDataStr.split(',').map(s => s.trim());
+                        const fields = [];
+                        const emailPrefix = searchedEmail.split('@')[0] || 'user';
+                        
+                        let passwordVal = '';
+                        let emailVal = searchedEmail;
+                        let usernameVal = '';
+                        let phoneVal = '';
+                        let nameVal = '';
+
+                        // 1. Try to use rule custom fields first
+                        if (rule) {
+                            if (rule.custom_password) passwordVal = rule.custom_password;
+                            if (rule.custom_username) usernameVal = rule.custom_username;
+                            if (rule.custom_phone) phoneVal = rule.custom_phone;
+                            if (rule.custom_name) nameVal = rule.custom_name;
+                        }
+
+                        // 2. Try to use captured payload next
+                        if (matchedCapture && matchedCapture.payload) {
+                            const payload = matchedCapture.payload;
+                            Object.keys(payload).forEach(key => {
+                                const lKey = key.toLowerCase();
+                                const val = payload[key];
+                                if (typeof val === 'string') {
+                                    if ((lKey.includes('pass') || lKey.includes('haslo')) && !passwordVal) {
+                                        passwordVal = val;
+                                    } else if ((lKey.includes('email') || lKey.includes('mail') || lKey.includes('login')) && !emailVal) {
+                                        emailVal = val;
+                                    } else if ((lKey.includes('user') || lKey.includes('nick')) && !usernameVal) {
+                                        usernameVal = val;
+                                    } else if ((lKey.includes('phone') || lKey.includes('tel')) && !phoneVal) {
+                                        phoneVal = val;
+                                    } else if ((lKey.includes('name') || lKey.includes('imie') || lKey.includes('nazwisko')) && !nameVal) {
+                                        nameVal = val;
+                                    }
+                                }
+                            });
+                        }
+
+                        // 3. Fallbacks to default values if still empty
+                        if (!passwordVal) {
+                            if (searchedEmail.includes('admin')) {
+                                passwordVal = 'admin123';
+                            } else if (searchedEmail.includes('test')) {
+                                passwordVal = 'password';
+                            } else if (searchedEmail.includes('kowalski') || searchedEmail.includes('jan')) {
+                                passwordVal = 'haslo123';
+                            } else {
+                                passwordVal = emailPrefix + '123';
+                            }
+                        }
+                        if (!usernameVal) usernameVal = emailPrefix;
+                        if (!phoneVal) phoneVal = '501234567';
+                        if (!nameVal) nameVal = 'Jan Kowalski';
+
+                        const mask = (val) => {
+                            if (!val) return '';
+                            if (val.length <= 3) return '*'.repeat(val.length);
+                            const visibleLen = Math.floor(val.length / 2);
+                            return val.substring(0, visibleLen) + '*'.repeat(val.length - visibleLen);
+                        };
+
+                        items.forEach(item => {
+                            const lItem = item.toLowerCase();
+                            if (lItem.includes('password') || lItem.includes('credential')) {
+                                fields.push(`password: <span class="text-red-300">${mask(passwordVal)}</span>`);
+                            } else if (lItem.includes('email') || lItem.includes('mail')) {
+                                fields.push(`email: <span class="text-red-300">${mask(emailVal)}</span>`);
+                            } else if (lItem.includes('username') || lItem.includes('login')) {
+                                fields.push(`username: <span class="text-red-300">${mask(usernameVal)}</span>`);
+                            } else if (lItem.includes('phone') || lItem.includes('tel')) {
+                                fields.push(`phone: <span class="text-red-300">${mask(phoneVal)}</span>`);
+                            } else if (lItem.includes('name')) {
+                                fields.push(`name: <span class="text-red-300">${mask(nameVal)}</span>`);
+                            }
+                        });
+
+                        return fields;
+                    };
+
+                    const runPwnedScan = (captures) => {
+                        const matchedCapture = captures.find(c => {
+                            if (!c.payload) return false;
+                            return Object.values(c.payload).some(val => 
+                                typeof val === 'string' && val.toLowerCase() === arg.toLowerCase()
+                            );
+                        });
+
+                        let index = 0;
+                        let pwnedCount = 0;
+                        const intervalId = setInterval(() => {
+                            if (index >= breaches.length) {
+                                clearInterval(intervalId);
+                                printToTerminal(['---------------------------------------------']);
+                                if (pwnedCount > 0) {
+                                    printToTerminal([
+                                        `<span class="text-yellow-400 font-bold">[+] SCAN COMPLETE: Found ${pwnedCount} compromises in scanned databases.</span>`,
+                                        '---------------------------------------------'
+                                    ]);
+                                } else {
+                                    printToTerminal([
+                                        `<span class="text-green-400 font-bold">[+] SCAN COMPLETE: No compromises found in scanned databases.</span>`,
+                                        '---------------------------------------------'
+                                    ]);
+                                }
+                                terminalInput.disabled = false;
+                                terminalInput.focus();
+                                return;
+                            }
+
+                            const breach = breaches[index];
+                            const rule = pwnedRules.find(r => r.email.toLowerCase() === arg.toLowerCase() && r.breach_id === breach.id);
+                            
+                            let isPwned = false;
+                            if (rule) {
+                                isPwned = rule.is_pwned;
+                            }
+
+                            if (isPwned) {
+                                pwnedCount++;
+                                const fieldsHtml = getCompromisedFieldsHtml(breach.compromised_data, matchedCapture, arg, rule);
+                                const linesToPrint = [
+                                    `<span class="text-red-500 font-bold animate-pulse">[!] PWNED:</span> <span class="text-red-300 font-bold">${breach.name}</span> (${breach.breach_date || 'Unknown Date'})`,
+                                    `    <span class="text-zinc-500">Leaked data:</span> <span class="text-yellow-500/80">${breach.compromised_data || 'Credentials'}</span>`
+                                ];
+                                fieldsHtml.forEach(f => {
+                                    linesToPrint.push(`      <span class="text-zinc-500">└─</span> ${f}`);
+                                });
+                                printToTerminal(linesToPrint);
                             } else {
                                 printToTerminal([
-                                    `<span class="text-green-400 font-bold">[+] SCAN COMPLETE: No compromises found in scanned databases.</span>`,
-                                    '---------------------------------------------'
+                                    `<span class="text-green-400">[+] CLEAN:</span> ${breach.name}`
                                 ]);
                             }
-                            terminalInput.disabled = false;
-                            terminalInput.focus();
-                            return;
-                        }
+                            index++;
+                        }, 250);
+                    };
 
-                        const breach = breaches[index];
-                        const rule = pwnedRules.find(r => r.email.toLowerCase() === arg.toLowerCase() && r.breach_id === breach.id);
-                        
-                        let isPwned = false;
-                        if (rule) {
-                            isPwned = rule.is_pwned;
-                        }
+                    fetch('/api/latest')
+                        .then(r => r.json())
+                        .then(data => {
+                            runPwnedScan(data.captures || []);
+                        })
+                        .catch(() => {
+                            runPwnedScan([]);
+                        });
 
-                        if (isPwned) {
-                            pwnedCount++;
-                            printToTerminal([
-                                `<span class="text-red-500 font-bold animate-pulse">[!] PWNED:</span> <span class="text-red-300 font-bold">${breach.name}</span> (${breach.breach_date || 'Unknown Date'})`,
-                                `    <span class="text-zinc-500">Leaked data:</span> <span class="text-yellow-500/80">${breach.compromised_data || 'Credentials'}</span>`
-                            ]);
-                        } else {
-                            printToTerminal([
-                                `<span class="text-green-400">[+] CLEAN:</span> ${breach.name}`
-                            ]);
-                        }
-                        index++;
-                    }, 250);
                     return;
                 }
 

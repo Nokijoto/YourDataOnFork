@@ -23,6 +23,22 @@ class PwnedRulesTable
                     ->searchable(),
                 ToggleColumn::make('is_pwned')
                     ->label('Czy wyciekł? (PWNED)'),
+                TextColumn::make('custom_password')
+                    ->label('Niestandardowe hasło')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('custom_username')
+                    ->label('Niestandardowy login')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('custom_phone')
+                    ->label('Niestandardowy telefon')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('custom_name')
+                    ->label('Niestandardowe imię/nazwisko')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
