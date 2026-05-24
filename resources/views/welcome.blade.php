@@ -125,137 +125,132 @@
         </div>
     </header>
 
-    <!-- Main Grid -->
-    <main class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow mb-6">
+    <!-- Main Layout -->
+    <main class="w-full max-w-7xl mx-auto flex flex-col gap-6 flex-grow mb-6">
         
-        <!-- Left Column: Controls and Links -->
-        <div class="lg:col-span-1 flex flex-col gap-6">
-            
-            <!-- Quick Actions Panel -->
-            <div style="display: none;" class="p-6 border border-cyan-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-cyan flex flex-col justify-between h-[300px]">
-                <div>
-                    <h2 class="text-lg font-semibold tracking-wider text-cyan-400 glow-cyan mb-2 uppercase">
-                        // SECURE ACCESS PORTALS
-                    </h2>
-                    <p class="text-xs text-cyan-500/60 mb-6">
-                        Authorized personnel only. Logs are being registered.
-                    </p>
-                    
-                    <div class="flex flex-col gap-4">
-                        <a href="/admin" class="group flex items-center justify-between p-3 border border-cyan-500/20 hover:border-cyan-400 bg-cyan-950/10 hover:bg-cyan-950/30 rounded-md transition-all duration-300">
-                            <div class="flex items-center gap-3">
-                                <span class="text-cyan-500">&gt;_</span>
-                                <span class="text-cyan-300 group-hover:text-cyan-100 transition-colors uppercase tracking-wider text-sm font-semibold">
-                                    FILAMENT ADMIN PANEL
-                                </span>
-                            </div>
-                            <span class="text-cyan-500 group-hover:translate-x-1 transition-transform">&rarr;</span>
-                        </a>
-
-                        <a href="http://localhost:8025" target="_blank" class="group flex items-center justify-between p-3 border border-emerald-500/20 hover:border-emerald-400 bg-emerald-950/10 hover:bg-emerald-950/30 rounded-md transition-all duration-300">
-                            <div class="flex items-center gap-3">
-                                <span class="text-emerald-500">✉_</span>
-                                <span class="text-emerald-300 group-hover:text-emerald-100 transition-colors uppercase tracking-wider text-sm font-semibold">
-                                    MAILPIT INTERCEPTOR
-                                </span>
-                            </div>
-                            <span class="text-emerald-500 group-hover:translate-x-1 transition-transform">&rarr;</span>
-                        </a>
-                    </div>
-                </div>
+        <!-- Quick Actions Panel (Hidden) -->
+        <div style="display: none;" class="p-6 border border-cyan-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-cyan flex flex-col justify-between h-[300px]">
+            <div>
+                <h2 class="text-lg font-semibold tracking-wider text-cyan-400 glow-cyan mb-2 uppercase">
+                    // SECURE ACCESS PORTALS
+                </h2>
+                <p class="text-xs text-cyan-500/60 mb-6">
+                    Authorized personnel only. Logs are being registered.
+                </p>
                 
-                <div class="text-xs text-cyan-500/40 mt-4 border-t border-cyan-950/40 pt-4 flex justify-between">
-                    <span>SECURITY LEV: 0</span>
-                    <span>CONTEXT: SAIL</span>
+                <div class="flex flex-col gap-4">
+                    <a href="/admin" class="group flex items-center justify-between p-3 border border-cyan-500/20 hover:border-cyan-400 bg-cyan-950/10 hover:bg-cyan-950/30 rounded-md transition-all duration-300">
+                        <div class="flex items-center gap-3">
+                            <span class="text-cyan-500">&gt;_</span>
+                            <span class="text-cyan-300 group-hover:text-cyan-100 transition-colors uppercase tracking-wider text-sm font-semibold">
+                                FILAMENT ADMIN PANEL
+                            </span>
+                        </div>
+                        <span class="text-cyan-500 group-hover:translate-x-1 transition-transform">&rarr;</span>
+                    </a>
+
+                    <a href="http://localhost:8025" target="_blank" class="group flex items-center justify-between p-3 border border-emerald-500/20 hover:border-emerald-400 bg-emerald-950/10 hover:bg-emerald-950/30 rounded-md transition-all duration-300">
+                        <div class="flex items-center gap-3">
+                            <span class="text-emerald-500">✉_</span>
+                            <span class="text-emerald-300 group-hover:text-emerald-100 transition-colors uppercase tracking-wider text-sm font-semibold">
+                                MAILPIT INTERCEPTOR
+                            </span>
+                        </div>
+                        <span class="text-emerald-500 group-hover:translate-x-1 transition-transform">&rarr;</span>
+                    </a>
                 </div>
             </div>
             
-            <!-- Live Capture Counter -->
-            <div class="p-4 border border-red-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg flex flex-col gap-3">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-sm font-semibold tracking-wider text-red-400 uppercase">// LIVE CAPTURE</h2>
-                    <span id="monitor-badge" class="text-xs px-2 py-0.5 rounded border border-gray-700 text-gray-500">OFF</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-black/40 rounded p-2 text-center">
-                        <div class="text-xl font-bold text-red-400" id="stat-captures">0</div>
-                        <div class="text-xs text-gray-500 uppercase">Requests</div>
-                    </div>
-                    <div class="bg-black/40 rounded p-2 text-center">
-                        <div class="text-xl font-bold text-cyan-400" id="stat-packets">0</div>
-                        <div class="text-xs text-gray-500 uppercase">Packets</div>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-600">Wpisz <span class="text-red-400 font-bold">monitor</span> aby włączyć live feed</div>
+            <div class="text-xs text-cyan-500/40 mt-4 border-t border-cyan-950/40 pt-4 flex justify-between">
+                <span>SECURITY LEV: 0</span>
+                <span>CONTEXT: SAIL</span>
             </div>
-
-            <!-- Network / Services Status -->
-            <div style="display: none;" class="p-6 border border-emerald-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-green flex-grow flex flex-col justify-between">
-                <div>
-                    <h2 class="text-lg font-semibold tracking-wider text-green-400 glow-green mb-4 uppercase">
-                        // ACTIVE TELEMETRY
-                    </h2>
-                    
-                    <div class="flex flex-col gap-4">
-                        <!-- Service Item -->
-                        <div class="flex items-center justify-between p-2 border-b border-emerald-900/20">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                <span class="text-sm font-semibold uppercase tracking-wider text-green-300">Database (MySQL)</span>
-                            </div>
-                            <span class="text-xs text-green-500 bg-green-950/40 px-2 py-0.5 border border-green-500/20 rounded">ONLINE</span>
-                        </div>
-                        
-                        <!-- Service Item -->
-                        <div class="flex items-center justify-between p-2 border-b border-emerald-900/20">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                <span class="text-sm font-semibold uppercase tracking-wider text-green-300">Cache (Redis)</span>
-                            </div>
-                            <span class="text-xs text-green-500 bg-green-950/40 px-2 py-0.5 border border-green-500/20 rounded">ONLINE</span>
-                        </div>
-                        
-                        <!-- Service Item -->
-                        <div class="flex items-center justify-between p-2 border-b border-emerald-900/20">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                <span class="text-sm font-semibold uppercase tracking-wider text-green-300">Mail Catcher</span>
-                            </div>
-                            <span class="text-xs text-green-500 bg-green-950/40 px-2 py-0.5 border border-green-500/20 rounded">ONLINE</span>
-                        </div>
-
-                        <!-- Service Item -->
-                        <div class="flex items-center justify-between p-2 border-b border-emerald-900/20">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                                <span class="text-sm font-semibold uppercase tracking-wider text-blue-300">HTTP Server (Nginx)</span>
-                            </div>
-                            <span class="text-xs text-blue-500 bg-blue-950/40 px-2 py-0.5 border border-blue-500/20 rounded">PORT 80</span>
-                        </div>
-                    </div>
-
-                    <!-- Dynamic SVG chart -->
-                    <div class="mt-6">
-                        <p class="text-xs text-green-500/60 uppercase mb-2">SYSTEM LOAD MONITOR</p>
-                        <div class="relative w-full h-24 bg-black/40 border border-emerald-950/80 rounded p-1 overflow-hidden">
-                            <svg class="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
-                                <path id="chart-path" d="M 0 30 Q 10 20, 20 28 T 40 22 T 60 15 T 80 25 T 100 20" fill="none" stroke="#4af626" stroke-width="1.2" class="transition-all duration-500"></path>
-                                <path id="chart-area" d="M 0 30 Q 10 20, 20 28 T 40 22 T 60 15 T 80 25 T 100 20 L 100 30 L 0 30 Z" fill="rgba(74, 246, 38, 0.05)" class="transition-all duration-500"></path>
-                            </svg>
-                        </div>
-                    </div>
+        </div>
+        
+        <!-- Live Capture Counter (At the top) -->
+        <div class="p-4 border border-red-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold tracking-wider text-red-400 uppercase">// LIVE CAPTURE</h2>
+                <span id="monitor-badge" class="text-xs px-2 py-0.5 rounded border border-gray-700 text-gray-500">OFF</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-black/40 rounded p-2 text-center">
+                    <div class="text-xl font-bold text-red-400" id="stat-captures">0</div>
+                    <div class="text-xs text-gray-500 uppercase">Requests</div>
                 </div>
-                
-                <div class="text-xs text-green-500/40 mt-4 border-t border-emerald-950/40 pt-4 flex justify-between">
-                    <span>APP_ENV: {{ config('app.env') }}</span>
-                    <span>PHP: 8.5.6</span>
+                <div class="bg-black/40 rounded p-2 text-center">
+                    <div class="text-xl font-bold text-cyan-400" id="stat-packets">0</div>
+                    <div class="text-xs text-gray-500 uppercase">Packets</div>
                 </div>
             </div>
-
+            <div class="text-xs text-gray-600">Wpisz <span class="text-red-400 font-bold">monitor</span> aby włączyć live feed</div>
         </div>
 
-        <!-- Right Columns: Big Terminal Panel -->
-        <div class="lg:col-span-2 flex flex-col">
+        <!-- Network / Services Status (Hidden) -->
+        <div style="display: none;" class="p-6 border border-emerald-900/40 bg-zinc-950/70 backdrop-blur-md rounded-lg glow-border-green flex flex-col justify-between">
+            <div>
+                <h2 class="text-lg font-semibold tracking-wider text-green-400 glow-green mb-4 uppercase">
+                    // ACTIVE TELEMETRY
+                </h2>
+                
+                <div class="flex flex-col gap-4">
+                    <!-- Service Item -->
+                    <div class="flex items-center justify-between p-2 border-b border-emerald-900/20">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-sm font-semibold uppercase tracking-wider text-green-300">Database (MySQL)</span>
+                        </div>
+                        <span class="text-xs text-green-500 bg-green-950/40 px-2 py-0.5 border border-green-500/20 rounded">ONLINE</span>
+                    </div>
+                    
+                    <!-- Service Item -->
+                    <div class="flex items-center justify-between p-2 border-b border-emerald-900/20">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-sm font-semibold uppercase tracking-wider text-green-300">Cache (Redis)</span>
+                        </div>
+                        <span class="text-xs text-green-500 bg-green-950/40 px-2 py-0.5 border border-green-500/20 rounded">ONLINE</span>
+                    </div>
+                    
+                    <!-- Service Item -->
+                    <div class="flex items-center justify-between p-2 border-b border-emerald-900/20">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-sm font-semibold uppercase tracking-wider text-green-300">Mail Catcher</span>
+                        </div>
+                        <span class="text-xs text-green-500 bg-green-950/40 px-2 py-0.5 border border-green-500/20 rounded">ONLINE</span>
+                    </div>
+
+                    <!-- Service Item -->
+                    <div class="flex items-center justify-between p-2 border-b border-emerald-900/20">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                            <span class="text-sm font-semibold uppercase tracking-wider text-blue-300">HTTP Server (Nginx)</span>
+                        </div>
+                        <span class="text-xs text-blue-500 bg-blue-950/40 px-2 py-0.5 border border-blue-500/20 rounded">PORT 80</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic SVG chart -->
+                <div class="mt-6">
+                    <p class="text-xs text-green-500/60 uppercase mb-2">SYSTEM LOAD MONITOR</p>
+                    <div class="relative w-full h-24 bg-black/40 border border-emerald-950/80 rounded p-1 overflow-hidden">
+                        <svg class="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
+                            <path id="chart-path" d="M 0 30 Q 10 20, 20 28 T 40 22 T 60 15 T 80 25 T 100 20" fill="none" stroke="#4af626" stroke-width="1.2" class="transition-all duration-500"></path>
+                            <path id="chart-area" d="M 0 30 Q 10 20, 20 28 T 40 22 T 60 15 T 80 25 T 100 20 L 100 30 L 0 30 Z" fill="rgba(74, 246, 38, 0.05)" class="transition-all duration-500"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-xs text-green-500/40 mt-4 border-t border-emerald-950/40 pt-4 flex justify-between">
+                <span>APP_ENV: {{ config('app.env') }}</span>
+                <span>PHP: 8.5.6</span>
+            </div>
+        </div>
+
+        <!-- Big Terminal Panel (Full Width) -->
+        <div class="w-full flex flex-col flex-grow">
             <div class="flex-grow p-6 border border-emerald-900/40 bg-black/85 backdrop-blur-md rounded-lg glow-border-green flex flex-col h-[500px] lg:h-auto min-h-[480px]">
                 
                 <!-- Terminal Header -->
