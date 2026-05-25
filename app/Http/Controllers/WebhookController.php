@@ -48,11 +48,25 @@ class WebhookController extends Controller
 
         // Wyciągnij dane z body (JSON lub form-data)
         $body = $request->all();
+        if (empty($body)) {
+            $rawContent = $request->getContent();
+            $decoded = json_decode($rawContent, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $body = $decoded;
+            }
+        }
         $source = $request->header('X-Source')
-            ?? $request->input('source', 'unknown');
-        $payload = $request->input('payload', $body);
+            ?? data_get($body, 'source')
+            ?? 'unknown';
+        $payload = data_get($body, 'payload', $body);
         if (isset($payload['source'])) {
             unset($payload['source']);
+        }
+
+        // Ignoruj zdarzenia typu heartbeat - nie chcemy zaśmiecać bazy i dashboardu
+        if (data_get($payload, '_event') === 'heartbeat') {
+            return response()->json(['status' => 'ignored'])
+                ->withHeaders($this->corsHeaders());
         }
 
         $cookieMetadata = $request->input('cookie_metadata')

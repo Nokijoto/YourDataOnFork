@@ -90,6 +90,81 @@
             background: rgba(74, 246, 38, 0.3);
             border-radius: 3px;
         }
+        .terminal-record {
+            border-left: 2px solid rgba(74, 246, 38, 0.34);
+            background: rgba(2, 6, 5, 0.38);
+            padding: 0.45rem 0.65rem;
+            margin: 0.25rem 0;
+            overflow-wrap: anywhere;
+        }
+        .terminal-record--capture {
+            border-left-color: rgba(248, 113, 113, 0.62);
+            background: rgba(69, 10, 10, 0.1);
+        }
+        .terminal-record--packet {
+            border-left-color: rgba(34, 211, 238, 0.62);
+            background: rgba(8, 47, 73, 0.12);
+        }
+        .terminal-record-title {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.25rem 0.75rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px dashed rgba(74, 246, 38, 0.16);
+        }
+        .terminal-kv-grid {
+            display: grid;
+            grid-template-columns: minmax(6.25rem, 0.22fr) minmax(0, 1fr);
+            gap: 0.1rem 0.75rem;
+            margin-top: 0.35rem;
+        }
+        .terminal-kv-label {
+            color: rgba(156, 163, 175, 0.9);
+            text-transform: uppercase;
+            font-size: 0.68rem;
+        }
+        .terminal-kv-value {
+            color: rgba(220, 252, 231, 0.96);
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .terminal-section {
+            margin-top: 0.45rem;
+            color: rgba(250, 204, 21, 0.9);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+        }
+        .terminal-tree {
+            margin-top: 0.2rem;
+            color: rgba(220, 252, 231, 0.94);
+        }
+        .terminal-tree-row {
+            display: grid;
+            grid-template-columns: minmax(6.25rem, 0.22fr) minmax(0, 1fr);
+            gap: 0.1rem 0.75rem;
+        }
+        .terminal-tree-key {
+            color: rgba(125, 211, 252, 0.95);
+        }
+        .terminal-tree-value {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .terminal-muted {
+            color: rgba(107, 114, 128, 0.95);
+        }
+        @media (max-width: 640px) {
+            .terminal-kv-grid,
+            .terminal-tree-row {
+                grid-template-columns: 1fr;
+                gap: 0.1rem;
+            }
+            .terminal-kv-value,
+            .terminal-tree-value {
+                margin-bottom: 0.35rem;
+            }
+        }
     </style>
 </head>
 <body class="relative min-h-screen flex flex-col justify-between p-4 md:p-8">
@@ -487,6 +562,177 @@
             terminalContent.scrollTop = terminalContent.scrollHeight;
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '—')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function formatDisplayValue(value) {
+            if (value === null || value === undefined || value === '') {
+                return '—';
+            }
+
+            if (typeof value === 'object') {
+                return Array.isArray(value)
+                    ? `[${value.length} items]`
+                    : `{${Object.keys(value).length} fields}`;
+            }
+
+            return String(value);
+        }
+
+        function renderKvRows(rows) {
+            return rows
+                .map(([label, value]) => `
+                    <div class="terminal-kv-label">${escapeHtml(label)}</div>
+                    <div class="terminal-kv-value">${escapeHtml(formatDisplayValue(value))}</div>
+                `)
+                .join('');
+        }
+
+        function getPayloadEntries(payload) {
+            if (!payload) {
+                return [];
+            }
+
+            if (typeof payload === 'object' && !Array.isArray(payload)) {
+                return Object.entries(payload);
+            }
+
+            return [['payload', payload]];
+        }
+
+        function renderPayloadFields(payload) {
+            const entries = getPayloadEntries(payload);
+
+            if (entries.length === 0) {
+                return renderKvRows([['payload', '—']]);
+            }
+
+            return `
+                <div class="terminal-section">┌ payload</div>
+                <div class="terminal-tree">
+                    ${renderTreeRows(entries)}
+                </div>
+            `;
+        }
+
+        function renderScalarValue(value) {
+            if (value === null || value === undefined || value === '') {
+                return '<span class="terminal-muted">—</span>';
+            }
+
+            if (typeof value === 'boolean') {
+                return value ? 'true' : 'false';
+            }
+
+            if (typeof value === 'number') {
+                return String(value);
+            }
+
+            return escapeHtml(String(value));
+        }
+
+        function renderTreeRows(entries, depth = 0) {
+            return entries
+                .map(([key, value]) => {
+                    const prefix = depth === 0 ? '├─' : '│ '.repeat(depth) + '├─';
+                    const label = `${prefix} ${key}`;
+
+                    if (value && typeof value === 'object' && !Array.isArray(value)) {
+                        return `
+                            <div class="terminal-tree-row">
+                                <div class="terminal-tree-key">${escapeHtml(label)}</div>
+                                <div class="terminal-tree-value terminal-muted">{${Object.keys(value).length} fields}</div>
+                            </div>
+                            ${renderTreeRows(Object.entries(value), depth + 1)}
+                        `;
+                    }
+
+                    if (Array.isArray(value)) {
+                        const preview = value
+                            .slice(0, 4)
+                            .map(item => typeof item === 'object' ? formatDisplayValue(item) : formatDisplayValue(item))
+                            .join(', ');
+                        const suffix = value.length > 4 ? `, +${value.length - 4} more` : '';
+
+                        return `
+                            <div class="terminal-tree-row">
+                                <div class="terminal-tree-key">${escapeHtml(label)}</div>
+                                <div class="terminal-tree-value">[${escapeHtml(preview + suffix)}]</div>
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div class="terminal-tree-row">
+                            <div class="terminal-tree-key">${escapeHtml(label)}</div>
+                            <div class="terminal-tree-value">${renderScalarValue(value)}</div>
+                        </div>
+                    `;
+                })
+                .join('');
+        }
+
+        function renderCaptureCard(c, index = null) {
+            const title = index === null ? 'CAPTURE' : `CAPTURE #${index}`;
+
+            return `
+                <div class="terminal-record terminal-record--capture">
+                    <div class="terminal-record-title">
+                        <span class="text-red-400 font-bold">[${escapeHtml(title)}]</span>
+                        ${formatSourceBadge(c.source || 'unknown')}
+                        <span class="text-green-300">${escapeHtml(c.ip_address || '?')}</span>
+                        <span class="text-gray-500">@ ${escapeHtml(c.created_at || '—')}</span>
+                    </div>
+                    <div class="terminal-kv-grid">
+                        ${renderKvRows([
+                            ['source', c.source],
+                            ['ip_address', c.ip_address],
+                            ['user_agent', c.user_agent],
+                            ['created_at', c.created_at],
+                        ])}
+                        ${renderPayloadFields(c.payload)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPacketCard(p, index = null) {
+            const protoColor = {
+                HTTP: 'text-orange-400', HTTPS: 'text-green-400',
+                DNS: 'text-lime-400', TCP: 'text-cyan-400',
+                UDP: 'text-yellow-400', ICMP: 'text-pink-400',
+                ARP: 'text-purple-400'
+            };
+            const c = protoColor[p.protocol] || 'text-gray-400';
+            const title = index === null ? 'PKT' : `PKT #${index}`;
+
+            return `
+                <div class="terminal-record terminal-record--packet">
+                    <div class="terminal-record-title">
+                        <span class="text-cyan-400 font-bold">[${escapeHtml(title)}]</span>
+                        <span class="${c} font-bold">[${escapeHtml(p.protocol || '?')}]</span>
+                        <span class="text-gray-500">@ ${escapeHtml(p.created_at || '—')}</span>
+                    </div>
+                    <div class="terminal-kv-grid">
+                        ${renderKvRows([
+                            ['protocol', p.protocol],
+                            ['source', `${p.src_ip || '?'}:${p.src_port || '?'}`],
+                            ['destination', `${p.dst_ip || '?'}:${p.dst_port || '?'}`],
+                            ['size', p.packet_size ? `${p.packet_size} B` : '—'],
+                            ['summary', p.summary],
+                            ['created_at', p.created_at],
+                        ])}
+                    </div>
+                </div>
+            `;
+        }
+
         // ============================================================
         // LIVE CAPTURE MONITOR — polling /api/latest every 4 seconds
         // ============================================================
@@ -508,12 +754,13 @@
         }
 
         function formatSourceBadge(source) {
+            const normalizedSource = String(source || 'unknown').toLowerCase();
             const colors = {
                 discord: 'text-indigo-400', facebook: 'text-blue-400',
                 steam: 'text-cyan-400', uczelnia: 'text-amber-400'
             };
-            const c = colors[source] || 'text-gray-400';
-            return `<span class="${c} font-bold uppercase">[${source}]</span>`;
+            const c = colors[normalizedSource] || 'text-gray-400';
+            return `<span class="${c} font-bold uppercase">[${escapeHtml(source || 'unknown')}]</span>`;
         }
 
         function pollLiveFeed() {
@@ -528,11 +775,10 @@
                     data.captures.forEach(c => {
                         if (c.id > lastCaptureId) {
                             lastCaptureId = c.id;
-                            const payloadKeys = c.payload ? Object.keys(c.payload).slice(0, 3).join(', ') : '—';
-                            showLiveAlert(`🔴 NOWE PRZECHWYCENIE! ${formatSourceBadge(c.source)} IP: <span class="text-green-300">${c.ip_address}</span> | Pola: ${payloadKeys}`);
+                            const payloadKeys = getPayloadEntries(c.payload).map(([key]) => key).join(', ') || '—';
+                            showLiveAlert(`🔴 NOWE PRZECHWYCENIE! ${formatSourceBadge(c.source)} IP: <span class="text-green-300">${escapeHtml(c.ip_address)}</span> | Pola: ${escapeHtml(payloadKeys)}`);
                             if (monitorActive) {
-                                printToTerminal([`<span class="text-red-500 font-bold">⚡ CAPTURE</span> ${formatSourceBadge(c.source)} ${c.ip_address} @ ${c.created_at}`,
-                                    `   Payload: <span class="text-red-300">${payloadKeys}</span>`]);
+                                printToTerminal([renderCaptureCard(c)]);
                             }
                         }
                     });
@@ -542,7 +788,7 @@
                         if (p.id > lastPacketId) {
                             lastPacketId = p.id;
                             if (monitorActive && ['HTTP','HTTPS','DNS','ARP'].includes(p.protocol)) {
-                                printToTerminal([`<span class="text-cyan-400 font-bold">📡 PKT</span> <span class="text-yellow-400">${p.protocol}</span> ${p.src_ip}:${p.src_port||'?'} → ${p.dst_ip}:${p.dst_port||'?'} | ${p.summary || p.packet_size + ' B'}`]);
+                                printToTerminal([renderPacketCard(p)]);
                             }
                         }
                     });
@@ -881,9 +1127,7 @@
                                 lines.push('<span class="text-gray-500">Brak przechwyconych requestów.</span>');
                             } else {
                                 data.captures.slice(0, 5).forEach((c, i) => {
-                                    const payloadKeys = c.payload ? Object.keys(c.payload).slice(0, 4).join(', ') : '—';
-                                    lines.push(`<span class="text-red-400 font-bold">[${i+1}]</span> ${formatSourceBadge(c.source)} <span class="text-green-300">${c.ip_address}</span> @ ${c.created_at}`);
-                                    lines.push(`    Pola: <span class="text-yellow-400">${payloadKeys}</span>`);
+                                    lines.push(renderCaptureCard(c, i + 1));
                                 });
                             }
                             lines.push('---------------------------------------------');
@@ -905,19 +1149,12 @@
                     fetch('/api/latest')
                         .then(r => r.json())
                         .then(data => {
-                            const protoColor = {
-                                HTTP: 'text-orange-400', HTTPS: 'text-green-400',
-                                DNS: 'text-lime-400', TCP: 'text-cyan-400',
-                                UDP: 'text-yellow-400', ICMP: 'text-pink-400',
-                                ARP: 'text-purple-400'
-                            };
                             const lines = ['---------------------------------------------'];
                             if (data.packets.length === 0) {
                                 lines.push('<span class="text-gray-500">Brak przechwyconych pakietów.</span>');
                             } else {
                                 data.packets.slice(0, 10).forEach((p, i) => {
-                                    const c = protoColor[p.protocol] || 'text-gray-400';
-                                    lines.push(`<span class="${c} font-bold">[${p.protocol}]</span> ${p.src_ip||'?'}:${p.src_port||'?'} → ${p.dst_ip||'?'}:${p.dst_port||'?'} | <span class="text-gray-400">${p.summary || p.packet_size + ' B'}</span>`);
+                                    lines.push(renderPacketCard(p, i + 1));
                                 });
                             }
                             lines.push('---------------------------------------------');
